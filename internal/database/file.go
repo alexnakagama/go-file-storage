@@ -2,7 +2,7 @@ package database
 
 import "time"
 
-type Files struct {
+type File struct {
 	ID        int       `json:"id"`
 	OwnerID   int       `json:"owner_id"`
 	FileName  string    `json:"file_name"`
