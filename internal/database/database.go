@@ -29,7 +29,8 @@ func InitDB() *sql.DB {
 		sslMode = "disable"
 	}
 
-	dsn := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=%s", user, password, host, port, dbName, sslMode)
+	dsn := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=%s",
+		user, password, host, port, dbName, sslMode)
 
 	db, err := sql.Open("postgres", dsn)
 	if err != nil {
