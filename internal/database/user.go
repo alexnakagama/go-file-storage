@@ -42,3 +42,11 @@ func CreateUser(db *sql.DB, name, email, hashedPassword string, isAdmin bool) (*
 
 	return &user, nil
 }
+
+func DeleteUser(db *sql.DB, name, email, hashedPassword string) (*User, error) {
+	query := `
+		
+	`
+
+	err := db.QueryRow()
+}
