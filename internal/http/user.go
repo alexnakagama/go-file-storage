@@ -65,7 +65,22 @@ func RegisterHandler(db *sql.DB) http.HandlerFunc {
 }
 
 func LoginHandler(db *sql.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
 
+		var req LoginRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			http.Error(w, "Invalid json", http.StatusBadRequest)
+		}
+
+		if req.Email == "" || req.Password == "" {
+			http.Error(w, "All fields are required", http.StatusBadRequest)
+			return
+		}
+	}
 }
 
 func DeleteUserHandler(db *sql.DB) http.HandlerFunc {

@@ -4,6 +4,8 @@ import (
 	"database/sql"
 	"fmt"
 	"time"
+
+	"github.com/alexedwards/argon2id"
 )
 
 type User struct {
@@ -60,5 +62,38 @@ func DeleteUser(db *sql.DB, id int) (*User, error) {
 	}
 
 	fmt.Println("User has been deleted")
+	return &user, nil
+}
+
+func SearchUser(db *sql.DB, email, password string) (*User, error) {
+	var user User
+	query := `
+		SELECT id, name, email, hashed_password, is_admin, created_at, updated_at
+		FROM users WHERE email = $1
+	`
+	err := db.QueryRow(query, email).Scan(
+		&user.ID,
+		&user.Name,
+		&user.Email,
+		&user.HashedPassword,
+		&user.CreatedAt,
+		&user.UpdatedAt,
+	)
+	if err == sql.ErrNoRows {
+		return nil, sql.ErrNoRows
+	} else if err != nil {
+		return nil, err
+	}
+
+	match, err := argon2id.ComparePasswordAndHash(password, user.HashedPassword)
+	if err != nil {
+		return nil, err
+	}
+	if !match {
+		fmt.Printf("Incorrect password or email")
+		return nil, nil
+	}
+
+	user.HashedPassword = ""
 	return &user, nil
 }
