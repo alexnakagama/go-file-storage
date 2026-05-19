@@ -25,7 +25,7 @@ type UserResponse struct {
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
-func CreateUser(db *sql.DB, name, email, hashedPassword string, isAdmin bool) (*User, error) {
+func CreateUser(db *sql.DB, name, email, hashedPassword string) (*User, error) {
 	now := time.Now()
 	var user User
 
@@ -34,7 +34,7 @@ func CreateUser(db *sql.DB, name, email, hashedPassword string, isAdmin bool) (*
         VALUES($1, $2, $3, $4, $5, $6)
         RETURNING id, name, email, is_admin, created_at, updated_at
     `
-	err := db.QueryRow(query, name, email, hashedPassword, isAdmin, now, now).
+	err := db.QueryRow(query, name, email, hashedPassword, false, now, now).
 		Scan(&user.ID, &user.Name, &user.Email, &user.IsAdmin, &user.CreatedAt, &user.UpdatedAt)
 
 	if err != nil {
