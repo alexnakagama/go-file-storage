@@ -2,6 +2,7 @@ package database
 
 import (
 	"database/sql"
+	"fmt"
 	"time"
 )
 
@@ -40,13 +41,24 @@ func CreateUser(db *sql.DB, name, email, hashedPassword string, isAdmin bool) (*
 		return nil, err
 	}
 
+	fmt.Println("User has been created successfully")
 	return &user, nil
 }
 
-func DeleteUser(db *sql.DB, name, email, hashedPassword string) (*User, error) {
+func DeleteUser(db *sql.DB, id int) (*User, error) {
+	var user User
 	query := `
-		
+		DELETE FROM users WHERE id=$1
+		RETURNING id, name, email, is_admin, created_at, updated_at
 	`
 
-	err := db.QueryRow()
+	err := db.QueryRow(query, id).
+		Scan(&user.ID, &user.Name, &user.Email, &user.IsAdmin, &user.CreatedAt, &user.UpdatedAt)
+
+	if err != nil {
+		return nil, err
+	}
+
+	fmt.Println("User has been deleted")
+	return &user, nil
 }
