@@ -30,12 +30,12 @@ func CreateUser(db *sql.DB, name, email, hashedPassword string, isAdmin bool) (*
 	var user User
 
 	query := `
-		INSERT INTO users (name, email, hashed_password, is_admin, created_at, updated_at)
-		VALUES($1, $2, $3, $4, $5, $6)
-		RETURNING id, name, email, is_admin, created_at, updated_at
-	`
+        INSERT INTO users (name, email, hashed_password, is_admin, created_at, updated_at)
+        VALUES($1, $2, $3, $4, $5, $6)
+        RETURNING id, name, email, is_admin, created_at, updated_at
+    `
 	err := db.QueryRow(query, name, email, hashedPassword, isAdmin, now, now).
-		Scan(&user.ID, &user.Name, &user.Email, &user.HashedPassword, &user.IsAdmin, &user.CreatedAt, &user.UpdatedAt)
+		Scan(&user.ID, &user.Name, &user.Email, &user.IsAdmin, &user.CreatedAt, &user.UpdatedAt)
 
 	if err != nil {
 		return nil, err

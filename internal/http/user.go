@@ -18,7 +18,9 @@ type LoginRequest struct {
 }
 
 func RegisterHandler(db *sql.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, req *http.Request) {
 
+	}
 }
 
 func LoginHandler(db *sql.DB) http.HandlerFunc {
