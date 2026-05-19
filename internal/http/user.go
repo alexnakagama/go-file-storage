@@ -3,7 +3,11 @@ package http
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"net/http"
+
+	"github.com/alexnakagama/go-file-storage/internal/database"
+	"github.com/alexnakagama/go-file-storage/utils"
 )
 
 type RegisterRequest struct {
@@ -41,7 +45,22 @@ func RegisterHandler(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
-		// todo hash password
+		hashedPassword, err := utils.HashPassword(req.Password)
+		if err != nil {
+			http.Error(w, "Failed to hash password", http.StatusInternalServerError)
+			return
+		}
+
+		user, err := database.CreateUser(db, req.Name, req.Email, hashedPassword)
+		if err != nil {
+			http.Error(w, fmt.Sprintf("Could not create user: %v", err), http.StatusInternalServerError)
+			return
+		}
+
+		user.HashedPassword = ""
+
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(user)
 	}
 }
 
