@@ -80,6 +80,17 @@ func LoginHandler(db *sql.DB) http.HandlerFunc {
 			http.Error(w, "All fields are required", http.StatusBadRequest)
 			return
 		}
+
+		user, err := database.SearchUser(db, req.Email, req.Password)
+		if err == sql.ErrNoRows || user == nil {
+			http.Error(w, "Invalid email or password", http.StatusUnauthorized)
+			return
+		} else if err != nil {
+			http.Error(w, "Database error", http.StatusInternalServerError)
+		}
+
+		w.Header().Set("Content-Type", "apllicaction/json")
+		json.NewEncoder(w).Encode(user)
 	}
 }
 
