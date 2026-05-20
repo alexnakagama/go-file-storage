@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
@@ -18,8 +19,10 @@ func main() {
 	godotenv.Load()
 	auth.InitPaseto()
 
+	connStr := os.Getenv("DATABASE_URL")
+
 	// opens db connection
-	db, err := sql.Open("postgres", "")
+	db, err := sql.Open("postgres", connStr)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -32,6 +35,7 @@ func main() {
 
 	// protected endpoints
 	http.Handle("/delete", middleware.AuthMiddleware(http.HandlerFunc(handler.DeleteUserHandler(db))))
+	http.Handle("/files", middleware.AuthMiddleware(handler.AddFileHandler(db, "./uploads")))
 
 	log.Println("Server running in port:8080")
 	log.Fatal(http.ListenAndServe(":8080", nil))
