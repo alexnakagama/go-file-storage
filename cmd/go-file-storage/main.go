@@ -28,6 +28,11 @@ func main() {
 	}
 	defer db.Close()
 
+	// create the uploads directory if it doesnt exists
+	if err := os.MkdirAll("./uploads", 0755); err != nil {
+		log.Fatal(err)
+	}
+
 	// endpoints
 	http.HandleFunc("/register", handler.RegisterUserHandler(db))
 	http.HandleFunc("/login", handler.LoginUserHandler(db))
