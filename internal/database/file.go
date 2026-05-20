@@ -2,6 +2,7 @@ package database
 
 import (
 	"database/sql"
+	"fmt"
 	"time"
 )
 
@@ -97,10 +98,20 @@ func GetFileByID(db *sql.DB, fileID int) (*File, error) {
 	return &file, nil
 }
 
-func DeleteFile(db *sql.DB, fileID int) error {
+func DeleteFile(db *sql.DB, fileID int) (*File, error) {
+	var file File
 	query := `
-		DELETE FROM files WHERE id = $1
+		DELETE FROM files WHERE id=$1
+		RETURNING id, owner_id, file_name, size, mime_type, created_at, updated_at
 	`
-	_, err := db.Exec(query, fileID)
-	return err
+
+	err := db.QueryRow(query, fileID).
+		Scan(&file.ID, &file.OwnerID, &file.FileName, &file.Size, &file.MimeType, &file.CreatedAt, &file.UpdatedAt)
+
+	if err != nil {
+		return nil, err
+	}
+
+	fmt.Println("File has been deleted")
+	return &file, nil
 }
