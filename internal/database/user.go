@@ -57,7 +57,7 @@ func DeleteUser(db *sql.DB, id int) (*User, error) {
 	`
 
 	err := db.QueryRow(query, id).
-		Scan(&user.ID, &user.Name, &user.Email, &user.IsAdmin, &user.CreatedAt, &user.UpdatedAt)
+		Scan(&user.ID, &user.Name, &user.Email, &user.IsAdmin, &user.EmailVerified, &user.EmailVerificationToken, &user.CreatedAt, &user.UpdatedAt)
 
 	if err != nil {
 		return nil, err
@@ -70,7 +70,7 @@ func DeleteUser(db *sql.DB, id int) (*User, error) {
 func SearchUser(db *sql.DB, email, password string) (*User, error) {
 	var user User
 	query := `
-		SELECT id, name, email, hashed_password, is_admin, created_at, updated_at
+		SELECT id, name, email, hashed_password, is_admin, email_verified, email_verification_token, created_at, updated_at
 		FROM users WHERE email = $1
 	`
 	err := db.QueryRow(query, email).Scan(
@@ -78,6 +78,9 @@ func SearchUser(db *sql.DB, email, password string) (*User, error) {
 		&user.Name,
 		&user.Email,
 		&user.HashedPassword,
+		&user.IsAdmin,
+		&user.EmailVerified,
+		&user.EmailVerificationToken,
 		&user.CreatedAt,
 		&user.UpdatedAt,
 	)
