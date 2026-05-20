@@ -5,11 +5,18 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/joho/godotenv"
+	_ "github.com/lib/pq"
+
+	"github.com/alexnakagama/go-file-storage/internal/auth"
 	"github.com/alexnakagama/go-file-storage/internal/handler"
 	"github.com/alexnakagama/go-file-storage/internal/middleware"
 )
 
 func main() {
+	godotenv.Load()
+	auth.InitPaseto()
+
 	db, err := sql.Open("postgres", "")
 	if err != nil {
 		log.Fatal(err)

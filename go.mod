@@ -4,6 +4,8 @@ go 1.26.3
 
 require (
 	github.com/alexedwards/argon2id v1.0.0
+	github.com/joho/godotenv v1.5.1
+	github.com/lib/pq v1.12.3
 	github.com/o1egl/paseto v1.0.0
 )
 
