@@ -79,6 +79,7 @@ func LoginUserHandler(db *sql.DB) http.HandlerFunc {
 		var req LoginRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			http.Error(w, "Invalid json", http.StatusBadRequest)
+			return
 		}
 
 		if req.Email == "" || req.Password == "" {
@@ -92,6 +93,7 @@ func LoginUserHandler(db *sql.DB) http.HandlerFunc {
 			return
 		} else if err != nil {
 			http.Error(w, "Database error", http.StatusInternalServerError)
+			return
 		}
 
 		w.Header().Set("Content-Type", "apllicaction/json")

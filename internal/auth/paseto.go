@@ -1,23 +1,30 @@
 package auth
 
 import (
+	"errors"
+	"os"
 	"time"
 
 	"github.com/o1egl/paseto"
 )
 
-var pasetoInstance = paseto.NewV2()
-
 type CustomClaims struct {
-	UserID int
-	Email  string
-	Exp    time.Time
+	UserID int       `json:"user_id"`
+	Email  string    `json:"email"`
+	Exp    time.Time `json:"exp"`
 }
 
-// todo: put it in env file, genmerate a more secure key
-var symetricKey = []byte("12345678901234567890123456789012")
+var symetricKey []byte
 
-func GenerateToken(key []byte, userID int, email string, duration time.Duration) (string, error) {
+func init() {
+	key := os.Getenv("PASETO_SYMMETRIC_KEY")
+	if len(key) != 32 {
+		panic("PASETO_SYMMETRIC_KEY must have 32 characters")
+	}
+	symetricKey = []byte(key)
+}
+
+func GenerateToken(userID int, email string, duration time.Duration) (string, error) {
 	now := time.Now()
 	claims := CustomClaims{
 		UserID: userID,
@@ -33,6 +40,17 @@ func GenerateToken(key []byte, userID int, email string, duration time.Duration)
 	return token, nil
 }
 
-func VerifyToken(token string, key []byte) (*CustomClaims, error) {
+func VerifyToken(token string) (*CustomClaims, error) {
+	var newClaims CustomClaims
 
+	err := paseto.NewV2().Decrypt(token, symetricKey, &newClaims, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if time.Now().After(newClaims.Exp) {
+		return nil, errors.New("Expired token")
+	}
+
+	return &newClaims, nil
 }
