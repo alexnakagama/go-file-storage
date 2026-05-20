@@ -1,6 +1,9 @@
 package database
 
-import "time"
+import (
+	"database/sql"
+	"time"
+)
 
 type File struct {
 	ID        int       `json:"id"`
@@ -30,4 +33,22 @@ func (f *File) ToResponse() *FileResponse {
 		CreatedAt: f.CreatedAt,
 		UpdatedAt: f.UpdatedAt,
 	}
+}
+
+func CreateFile(db *sql.DB, ownerID int, fileName string, size int64, mimeType string) (*File, error) {
+	now := time.Now()
+	var file File
+
+	query := `
+		INSERT INTO files (owner_id, file_name, size, mime_type, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, $5, $6)
+		RETURNING id, owner_id, file_name, size, mime_type, created_at, updated_at
+	`
+	err := db.QueryRow(query, ownerID, fileName, size, mimeType, now, now).
+		Scan(&file.ID, &file.OwnerID, &file.FileName, &file.Size, &file.MimeType, &file.CreatedAt, &file.UpdatedAt)
+	if err != nil {
+		return nil, err
+	}
+
+	return &file, nil
 }
