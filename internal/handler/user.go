@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/google/uuid"
+
 	"github.com/alexnakagama/go-file-storage/internal/auth"
 	"github.com/alexnakagama/go-file-storage/internal/database"
 	"github.com/alexnakagama/go-file-storage/internal/middleware"
@@ -59,16 +61,30 @@ func RegisterUserHandler(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
-		user, err := database.CreateUser(db, req.Name, req.Email, hashedPassword)
+		verificationToken := uuid.New().String()
+
+		user, err := database.CreateUser(
+			db,
+			req.Name,
+			req.Email,
+			hashedPassword,
+			verificationToken,
+		)
 		if err != nil {
 			http.Error(w, fmt.Sprintf("Could not create user: %v", err), http.StatusInternalServerError)
 			return
 		}
 
+		verificationURL := fmt.Sprintf("http://localhost:8080/verify-email?token=%s", verificationToken)
+		fmt.Println("Verify your email visiting:", verificationURL)
+		// Here send email in prod
+
 		user.HashedPassword = ""
 
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(user)
+		json.NewEncoder(w).Encode(map[string]string{
+			"message": "User created successfully. Verify your email before logging in",
+		})
 	}
 }
 
@@ -81,8 +97,10 @@ func LoginUserHandler(db *sql.DB) http.HandlerFunc {
 
 		var req LoginRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			http.Error(w, "Invalid json", http.StatusBadRequest)
-			return
+			if r.Method != http.MethodPost {
+				http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+				return
+			}
 		}
 
 		if req.Email == "" || req.Password == "" {
