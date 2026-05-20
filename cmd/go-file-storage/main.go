@@ -28,6 +28,9 @@ func main() {
 	// endpoints
 	http.HandleFunc("/register", handler.RegisterUserHandler(db))
 	http.HandleFunc("/login", handler.LoginUserHandler(db))
+	http.HandleFunc("/verify-email", handler.VerifyEmailHandler(db))
+
+	// protected endpoints
 	http.Handle("/delete", middleware.AuthMiddleware(http.HandlerFunc(handler.DeleteUserHandler(db))))
 
 	log.Println("Server running in port:8080")

@@ -117,6 +117,11 @@ func LoginUserHandler(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
+		if !user.EmailVerified {
+			http.Error(w, "You need to verify your email", http.StatusUnauthorized)
+			return
+		}
+
 		token, err := auth.GenerateToken(user.ID, user.Email, time.Hour)
 		if err != nil {
 			http.Error(w, "Failed to generate token", http.StatusInternalServerError)
@@ -183,6 +188,6 @@ func VerifyEmailHandler(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
-		w.Write([]byte("Email verified, you can access!"))
+		fmt.Println(w, "Email verified, now you can log in!")
 	}
 }
