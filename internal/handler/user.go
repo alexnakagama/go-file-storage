@@ -162,3 +162,27 @@ func DeleteUserHandler(db *sql.DB) http.HandlerFunc {
 		json.NewEncoder(w).Encode(deletedUser)
 	}
 }
+
+func VerifyEmailHandler(db *sql.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		token := r.URL.Query().Get("token")
+		if token == "" {
+			http.Error(w, "Token missing", http.StatusBadRequest)
+			return
+		}
+
+		user, err := database.FindUserByVerificationToken(db, token)
+		if err != nil || user == nil {
+			http.Error(w, "Invalid or expired token", http.StatusBadRequest)
+			return
+		}
+
+		err = database.MarkEmailAsVerified(db, user.ID)
+		if err != nil {
+			http.Error(w, "Error verifying email", http.StatusInternalServerError)
+			return
+		}
+
+		w.Write([]byte("Email verified, you can access!"))
+	}
+}

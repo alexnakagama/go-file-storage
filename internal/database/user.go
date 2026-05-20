@@ -3,6 +3,7 @@ package database
 import (
 	"database/sql"
 	"fmt"
+	"os/user"
 	"time"
 
 	"github.com/alexedwards/argon2id"
@@ -97,4 +98,8 @@ func SearchUser(db *sql.DB, email, password string) (*User, error) {
 
 	user.HashedPassword = ""
 	return &user, nil
+}
+
+func FindUserByVerificationToken(db *sql.DB, token string) (*User, error) {
+
 }
