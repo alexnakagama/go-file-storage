@@ -9,6 +9,7 @@ import (
 
 	"github.com/alexnakagama/go-file-storage/internal/auth"
 	"github.com/alexnakagama/go-file-storage/internal/database"
+	"github.com/alexnakagama/go-file-storage/internal/middleware"
 	"github.com/alexnakagama/go-file-storage/utils"
 )
 
@@ -126,27 +127,13 @@ func DeleteUserHandler(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
-		var req DeleteRequest
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			http.Error(w, "Invalid json", http.StatusBadRequest)
+		claims, ok := middleware.GetUserClaims(r)
+		if !ok {
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return
 		}
 
-		if req.Email == "" || req.Password == "" {
-			http.Error(w, "All fields are required", http.StatusBadRequest)
-			return
-		}
-
-		user, err := database.SearchUser(db, req.Email, req.Password)
-		if err == sql.ErrNoRows || user == nil {
-			http.Error(w, "Invalid email or password", http.StatusUnauthorized)
-			return
-		} else if err != nil {
-			http.Error(w, "Database error", http.StatusInternalServerError)
-			return
-		}
-
-		deletedUser, err := database.DeleteUser(db, user.ID)
+		deletedUser, err := database.DeleteUser(db, claims.UserID)
 		if err != nil {
 			http.Error(w, "Failed to delete user", http.StatusInternalServerError)
 			return
