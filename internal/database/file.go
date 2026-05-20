@@ -77,3 +77,26 @@ func GetFileByOwner(db *sql.DB, ownerID int) ([]*File, error) {
 	}
 	return files, nil
 }
+
+func GetFileByID(db *sql.DB, fileID int) (*File, error) {
+	var file File
+	query := `
+		SELECT id, owner_id, file_name, size, mime_type, created_at, updated_at
+		FROM files WHERE id = $1
+	`
+	err := db.QueryRow(query, fileID).Scan(
+		&file.ID, &file.OwnerID, &file.FileName, &file.Size, &file.MimeType, &file.CreatedAt, &file.UpdatedAt,
+	)
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	return &file, nil
+}
+
+func DeleteFile() {
+
+}
