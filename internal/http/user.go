@@ -5,7 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"time"
 
+	"github.com/alexnakagama/go-file-storage/internal/auth"
 	"github.com/alexnakagama/go-file-storage/internal/database"
 	"github.com/alexnakagama/go-file-storage/utils"
 )
@@ -96,8 +98,24 @@ func LoginUserHandler(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
-		w.Header().Set("Content-Type", "apllicaction/json")
-		json.NewEncoder(w).Encode(user)
+		token, err := auth.GenerateToken(user.ID, user.Email, time.Hour)
+		if err != nil {
+			http.Error(w, "Failed to generate token", http.StatusInternalServerError)
+			return
+		}
+
+		user.HashedPassword = ""
+
+		resp := struct {
+			User  *database.User `json:"user"`
+			Token string         `json:"token"`
+		}{
+			User:  user,
+			Token: token,
+		}
+
+		w.Header().Set("Content-Type", "applicaction/json")
+		json.NewEncoder(w).Encode(&resp)
 	}
 }
 
