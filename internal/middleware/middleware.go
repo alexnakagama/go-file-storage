@@ -14,12 +14,18 @@ const UserClaimsKey = contextKey("user_claims")
 
 func AuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		const bearerPrefix = "Bearer "
+
 		authHeader := r.Header.Get("Authorization")
-		if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer") {
+		if authHeader == "" || !strings.HasPrefix(authHeader, bearerPrefix) {
 			http.Error(w, "Missing or invalid Authorization header", http.StatusUnauthorized)
 			return
 		}
-		token := strings.TrimPrefix(authHeader, "Bearer")
+		token := strings.TrimSpace(authHeader[len(bearerPrefix):])
+		if token == "" {
+			http.Error(w, "Missing token after Bearer", http.StatusUnauthorized)
+			return
+		}
 
 		claims, err := auth.VerifyToken(token)
 		if err != nil {
