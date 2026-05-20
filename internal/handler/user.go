@@ -22,14 +22,30 @@ type RegisterRequest struct {
 	ConfirmPassword string `json:"confirm_password"`
 }
 
+type RegisterResponse struct {
+	Message string         `json:"message"`
+	User    *database.User `json:"user"`
+}
+
 type LoginRequest struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
 }
 
+type LoginResponse struct {
+	Message string         `json:"message"`
+	User    *database.User `json:"user"`
+	Token   string         `json:"token"`
+}
+
 type DeleteRequest struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
+}
+
+type DeleteUserResponse struct {
+	Message string         `json:"message"`
+	User    *database.User `json:"user"`
 }
 
 func RegisterUserHandler(db *sql.DB) http.HandlerFunc {
@@ -82,9 +98,13 @@ func RegisterUserHandler(db *sql.DB) http.HandlerFunc {
 		user.HashedPassword = ""
 
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(map[string]string{
-			"message": "User created successfully. Verify your email before logging in",
-		})
+
+		resp := RegisterResponse{
+			Message: "User created successfully. Verify your email before logging in",
+			User:    nil,
+		}
+
+		json.NewEncoder(w).Encode(resp)
 	}
 }
 
@@ -130,16 +150,14 @@ func LoginUserHandler(db *sql.DB) http.HandlerFunc {
 
 		user.HashedPassword = ""
 
-		resp := struct {
-			User  *database.User `json:"user"`
-			Token string         `json:"token"`
-		}{
-			User:  user,
-			Token: token,
+		resp := LoginResponse{
+			Message: "Login successfull",
+			User:    user,
+			Token:   token,
 		}
 
 		w.Header().Set("Content-Type", "applicaction/json")
-		json.NewEncoder(w).Encode(&resp)
+		json.NewEncoder(w).Encode(resp)
 	}
 }
 
@@ -163,11 +181,13 @@ func DeleteUserHandler(db *sql.DB) http.HandlerFunc {
 		}
 
 		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(map[string]any{
-			"message": "User deleted successfully",
-			"user":    deletedUser,
-		})
+
+		resp := DeleteUserResponse{
+			Message: "User deleted successfully",
+			User:    deletedUser,
+		}
+
+		json.NewEncoder(w).Encode(resp)
 	}
 }
 
