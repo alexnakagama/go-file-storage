@@ -53,7 +53,7 @@ func DeleteUser(db *sql.DB, id int) (*User, error) {
 	var user User
 	query := `
 		DELETE FROM users WHERE id=$1
-		RETURNING id, name, email, is_admin, created_at, updated_at
+		RETURNING id, name, email, is_admin, email_verified, email_verification_token, created_at, updated_at
 	`
 
 	err := db.QueryRow(query, id).
