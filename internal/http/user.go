@@ -27,7 +27,7 @@ type DeleteRequest struct {
 	Password string `json:"password"`
 }
 
-func RegisterHandler(db *sql.DB) http.HandlerFunc {
+func RegisterUserHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -69,7 +69,7 @@ func RegisterHandler(db *sql.DB) http.HandlerFunc {
 	}
 }
 
-func LoginHandler(db *sql.DB) http.HandlerFunc {
+func LoginUserHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -109,6 +109,7 @@ func DeleteUserHandler(db *sql.DB) http.HandlerFunc {
 		var req DeleteRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			http.Error(w, "Invalid json", http.StatusBadRequest)
+			return
 		}
 
 		if req.Email == "" || req.Password == "" {
@@ -116,6 +117,23 @@ func DeleteUserHandler(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
-		user, err := database.DeleteUser(db)
+		user, err := database.SearchUser(db, req.Email, req.Password)
+		if err == sql.ErrNoRows || user == nil {
+			http.Error(w, "Invalid email or password", http.StatusUnauthorized)
+			return
+		} else if err != nil {
+			http.Error(w, "Database error", http.StatusInternalServerError)
+			return
+		}
+
+		deletedUser, err := database.DeleteUser(db, user.ID)
+		if err != nil {
+			http.Error(w, "Failed to delete user", http.StatusInternalServerError)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(deletedUser)
 	}
 }
