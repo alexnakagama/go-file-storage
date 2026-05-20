@@ -17,9 +17,9 @@ type CustomClaims struct {
 var symetricKey []byte
 
 func InitPaseto() {
-	key := os.Getenv("PASETO_SYMETRIC_KEY")
+	key := os.Getenv("PASETO_SYMMETRIC_KEY")
 	if len(key) != 32 {
-		panic("PASETO_SYMETRIC_KEY must have 32 characters")
+		panic("PASETO_SYMMETRIC_KEY must have 32 characters")
 	}
 	symetricKey = []byte(key)
 }
