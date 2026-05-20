@@ -97,6 +97,10 @@ func GetFileByID(db *sql.DB, fileID int) (*File, error) {
 	return &file, nil
 }
 
-func DeleteFile() {
-
+func DeleteFile(db *sql.DB, fileID int) error {
+	query := `
+		DELETE FROM files WHERE id = $1
+	`
+	_, err := db.Exec(query, fileID)
+	return err
 }
