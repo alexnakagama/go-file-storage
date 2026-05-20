@@ -61,7 +61,7 @@ func AddFileHandler(db *sql.DB, uploadDir string) http.HandlerFunc {
 
 		mimeType := header.Header.Get("Content-Type")
 
-		dbFile, err := database.CreateFile(db, ownerID, header.Filename, size, mimeType)
+		dbFile, err := database.CreateFile(db, ownerID, header.Filename, storedFileName, size, mimeType)
 		if err != nil {
 			http.Error(w, "Database error", http.StatusInternalServerError)
 			return
@@ -76,7 +76,7 @@ func AddFileHandler(db *sql.DB, uploadDir string) http.HandlerFunc {
 			Message:  "File uploaded successfully",
 		}
 
-		w.Header().Set("Content-Type", "application-json")
+		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(resp)
 	}
 }

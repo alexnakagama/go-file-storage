@@ -20,15 +20,6 @@ type User struct {
 	UpdatedAt              time.Time `json:"updated_at"`
 }
 
-type UserResponse struct {
-	ID        int       `json:"id"`
-	Name      string    `json:"name"`
-	Email     string    `json:"email"`
-	IsAdmin   bool      `json:"is_admin"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
-}
-
 func CreateUser(db *sql.DB, name, email, hashedPassword, verificationToken string) (*User, error) {
 	now := time.Now()
 	var user User
