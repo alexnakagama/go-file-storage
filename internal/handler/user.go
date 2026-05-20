@@ -145,7 +145,7 @@ func LoginUserHandler(db *sql.DB) http.HandlerFunc {
 
 func DeleteUserHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodPost {
+		if r.Method != http.MethodDelete {
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 			return
 		}
@@ -164,7 +164,10 @@ func DeleteUserHandler(db *sql.DB) http.HandlerFunc {
 
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(deletedUser)
+		json.NewEncoder(w).Encode(map[string]any{
+			"message": "User deleted successfully",
+			"user":    deletedUser,
+		})
 	}
 }
 
