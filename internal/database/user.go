@@ -3,21 +3,21 @@ package database
 import (
 	"database/sql"
 	"fmt"
-	"os/user"
 	"time"
 
 	"github.com/alexedwards/argon2id"
 )
 
 type User struct {
-	ID             int       `json:"id"`
-	Name           string    `json:"name"`
-	Email          string    `json:"email"`
-	HashedPassword string    `json:"-"`
-	IsAdmin        bool      `json:"is_admin"`
-	EmailVerified  bool      `json:"email_verified"`
-	CreatedAt      time.Time `json:"created_at"`
-	UpdatedAt      time.Time `json:"updated_at"`
+	ID                     int       `json:"id"`
+	Name                   string    `json:"name"`
+	Email                  string    `json:"email"`
+	HashedPassword         string    `json:"-"`
+	IsAdmin                bool      `json:"is_admin"`
+	EmailVerified          bool      `json:"email_verified"`
+	EmailVerificationToken string    `json:"-"`
+	CreatedAt              time.Time `json:"created_at"`
+	UpdatedAt              time.Time `json:"updated_at"`
 }
 
 type UserResponse struct {
@@ -29,17 +29,17 @@ type UserResponse struct {
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
-func CreateUser(db *sql.DB, name, email, hashedPassword, veritifactionToken string) (*User, error) {
+func CreateUser(db *sql.DB, name, email, hashedPassword, verificationToken string) (*User, error) {
 	now := time.Now()
 	var user User
 
 	query := `
-        INSERT INTO users (name, email, hashed_password, is_admin, email_verified, created_at, updated_at)
-        VALUES($1, $2, $3, $4, $5, $6, $7)
-        RETURNING id, name, email, is_admin, email_verified, created_at, updated_at
+        INSERT INTO users (name, email, hashed_password, is_admin, email_verified, email_verification_token, created_at, updated_at)
+        VALUES($1, $2, $3, $4, $5, $6, $7, $8)
+        RETURNING id, name, email, is_admin, email_verified, email_verification_token, created_at, updated_at
     `
-	err := db.QueryRow(query, name, email, hashedPassword, false, false, now, now).
-		Scan(&user.ID, &user.Name, &user.Email, &user.IsAdmin, &user.EmailVerified, &user.CreatedAt, &user.UpdatedAt)
+	err := db.QueryRow(query, name, email, hashedPassword, false, false, verificationToken, now, now).
+		Scan(&user.ID, &user.Name, &user.Email, &user.IsAdmin, &user.EmailVerified, &user.EmailVerificationToken, &user.CreatedAt, &user.UpdatedAt)
 
 	if err != nil {
 		return nil, err
@@ -101,5 +101,38 @@ func SearchUser(db *sql.DB, email, password string) (*User, error) {
 }
 
 func FindUserByVerificationToken(db *sql.DB, token string) (*User, error) {
+	var user User
+	query := `
+		SELECT id, name, email, is_admin, email_verified, created_at, updated_at
+		FROM users
+		WHERE email_verification_token = $1 LIMIT 1
+	`
 
+	err := db.QueryRow(query, token).Scan(
+		&user.ID,
+		&user.Name,
+		&user.Email,
+		&user.IsAdmin,
+		&user.EmailVerified,
+		&user.CreatedAt,
+		&user.UpdatedAt,
+	)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &user, nil
+}
+
+func MarkEmailAsVerified(db *sql.DB, id int) error {
+	query := `
+		UPDATE users
+		SET email_verified = TRUE,
+			email_verification_token = NULL
+		WHERE id = $1
+	`
+	_, err := db.Exec(query, id)
+	return err
 }
