@@ -14,15 +14,18 @@ import (
 )
 
 func main() {
+	// reads the .env file
 	godotenv.Load()
 	auth.InitPaseto()
 
+	// opens db connection
 	db, err := sql.Open("postgres", "")
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer db.Close()
 
+	// endpoints
 	http.HandleFunc("/register", handler.RegisterUserHandler(db))
 	http.HandleFunc("/login", handler.LoginUserHandler(db))
 	http.Handle("/delete", middleware.AuthMiddleware(http.HandlerFunc(handler.DeleteUserHandler(db))))
