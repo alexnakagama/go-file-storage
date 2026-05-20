@@ -52,3 +52,28 @@ func CreateFile(db *sql.DB, ownerID int, fileName string, size int64, mimeType s
 
 	return &file, nil
 }
+
+func GetFileByOwner(db *sql.DB, ownerID int) ([]*File, error) {
+	query := `
+		SELECT id, owner_id, file_name, size, mime_type, created_at, updated_at 
+		FROM files WHERE owner_id = $1
+	`
+	rows, err := db.Query(query, ownerID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var files []*File
+	for rows.Next() {
+		var file File
+
+		err := rows.Scan(&file.ID, &file.OwnerID, &file.FileName, &file.Size, &file.MimeType, &file.CreatedAt, &file.UpdatedAt)
+		if err != nil {
+			return nil, err
+		}
+
+		files = append(files, &file)
+	}
+	return files, nil
+}
