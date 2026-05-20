@@ -115,3 +115,22 @@ func DeleteFile(db *sql.DB, fileID int) (*File, error) {
 	fmt.Println("File has been deleted")
 	return &file, nil
 }
+
+func UpdateFileName(db *sql.DB, fileID int, newFileName string) (*File, error) {
+	var file File
+	query := `
+		UPDATE files
+		SET file_name = $1, updated_at = $2
+		WHERE id = $3
+		RETURNING id, owner_id, file_name, size, mime_type, created_at, updated_at
+	`
+	now := time.Now()
+	err := db.QueryRow(query, newFileName, now, fileID).Scan(
+		&file.ID, &file.OwnerID, &file.FileName, &file.Size, &file.MimeType, &file.CreatedAt, &file.UpdatedAt,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &file, err
+}
