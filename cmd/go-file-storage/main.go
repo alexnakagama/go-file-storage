@@ -33,7 +33,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	// endpoints
+	// endpoints for authentication
 	http.HandleFunc("/register", handler.RegisterUserHandler(db))
 	http.HandleFunc("/login", handler.LoginUserHandler(db))
 	http.HandleFunc("/verify-email", handler.VerifyEmailHandler(db))
