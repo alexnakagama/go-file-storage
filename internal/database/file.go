@@ -116,3 +116,20 @@ func UpdateFileName(db *sql.DB, fileID int, newFileName string) (*File, error) {
 
 	return &file, err
 }
+
+func GetFileByIDAndOwner(db *sql.DB, fileID int, ownerID int) (*File, error) {
+	var f File
+
+	query := `
+		SELECT id, owner_id, file_name, storage_path, size, mime_type, created_at, updated_at
+		FROM files WHERE id = $1 AND owner_id = $2
+	`
+
+	row := db.QueryRow(query, fileID, ownerID)
+	err := row.Scan(&f.ID, &f.OwnerID, &f.FileName, &f.StoragePath, &f.Size, &f.MimeType, &f.CreatedAt, &f.UpdatedAt)
+	if err != nil {
+		return nil, err
+	}
+
+	return &f, nil
+}
