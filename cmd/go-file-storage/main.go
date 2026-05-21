@@ -40,7 +40,19 @@ func main() {
 
 	// protected endpoints
 	http.Handle("/delete", middleware.AuthMiddleware(http.HandlerFunc(handler.DeleteUserHandler(db))))
-	http.Handle("/files", middleware.AuthMiddleware(handler.AddFileHandler(db, "./uploads")))
+
+	http.Handle("/files", middleware.AuthMiddleware(
+		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			switch r.Method {
+			case http.MethodPost:
+				handler.AddFileHandler(db, "./uploads")(w, r)
+			case http.MethodGet:
+				handler.SearchFileByOwnerHandler(db)(w, r)
+			default:
+				http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			}
+		}),
+	))
 
 	log.Println("Server running in port:8080")
 	log.Fatal(http.ListenAndServe(":8080", nil))
