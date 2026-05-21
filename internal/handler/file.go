@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 	"time"
 
 	"github.com/alexnakagama/go-file-storage/internal/database"
@@ -153,9 +154,15 @@ func DownloadFileHandler(db *sql.DB, uploadDir string) http.HandlerFunc {
 			return
 		}
 
-		fileID := r.URL.Query().Get("id")
-		if fileID == "" {
-			http.Error(w, "Invalid fileID", http.StatusInternalServerError)
+		fileIDStr := r.URL.Query().Get("file_id")
+		if fileIDStr == "" {
+			http.Error(w, "file_id is required", http.StatusBadRequest)
+			return
+		}
+
+		fileID, err := strconv.Atoi(fileIDStr)
+		if err != nil {
+			http.Error(w, "Invalid file_id", http.StatusBadRequest)
 			return
 		}
 
@@ -165,7 +172,7 @@ func DownloadFileHandler(db *sql.DB, uploadDir string) http.HandlerFunc {
 			return
 		}
 
-		filePath := filepath.Join(uploadDir, db.StoragePath)
+		filePath := filepath.Join(uploadDir, dbFile.StoragePath)
 		file, err := os.Open(filePath)
 		if err != nil {
 			http.Error(w, "Could not open file", http.StatusInternalServerError)
