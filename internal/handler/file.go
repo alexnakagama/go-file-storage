@@ -80,3 +80,40 @@ func AddFileHandler(db *sql.DB, uploadDir string) http.HandlerFunc {
 		json.NewEncoder(w).Encode(resp)
 	}
 }
+
+func SearchFileByOwnerHandler(db *sql.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		userIDVal := ctx.Value("userID")
+		if userIDVal == nil {
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
+
+		ownerID, ok := userIDVal.(int)
+		if !ok {
+			http.Error(w, "Invalid userID", http.StatusInternalServerError)
+			return
+		}
+
+		files, err := database.GetFileByOwner(db, ownerID)
+		if err != nil {
+			http.Error(w, "Database error", http.StatusInternalServerError)
+			return
+		}
+
+		fileList := make([]FileResponse, 0, len(files))
+		for _, f := range files {
+			fileList = append(fileList, FileResponse{
+				ID:       f.ID,
+				OwnerID:  f.OwnerID,
+				FileName: f.FileName,
+				Size:     f.Size,
+				MimeType: f.MimeType,
+			})
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(fileList)
+	}
+}
