@@ -137,3 +137,45 @@ func SearchFileByOwnerHandler(db *sql.DB) http.HandlerFunc {
 		json.NewEncoder(w).Encode(fileList)
 	}
 }
+
+func DownloadFileHandler(db *sql.DB, uploadDir string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		userIDVal := ctx.Value("userID")
+		if userIDVal == nil {
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
+
+		ownerID, ok := userIDVal.(int)
+		if !ok {
+			http.Error(w, "Invalid userID", http.StatusInternalServerError)
+			return
+		}
+
+		fileID := r.URL.Query().Get("id")
+		if fileID == "" {
+			http.Error(w, "Invalid fileID", http.StatusInternalServerError)
+			return
+		}
+
+		dbFile, err := database.GetFileByIDAndOwner(db, fileID, ownerID)
+		if err != nil {
+			http.Error(w, "fileID is required", http.StatusInternalServerError)
+			return
+		}
+
+		filePath := filepath.Join(uploadDir, db.StoragePath)
+		file, err := os.Open(filePath)
+		if err != nil {
+			http.Error(w, "Could not open file", http.StatusInternalServerError)
+			return
+		}
+		defer file.Close()
+
+		w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", dbFile.FileName))
+		w.Header().Set("Content-Type", dbFile.MimeType)
+		w.Header().Set("Content-Lenght", fmt.Sprintf("&d", dbFile.Size))
+		io.Copy(w, file)
+	}
+}
