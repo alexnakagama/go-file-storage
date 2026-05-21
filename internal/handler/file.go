@@ -14,12 +14,15 @@ import (
 )
 
 type FileResponse struct {
-	ID       int    `json:"id"`
-	OwnerID  int    `json:"owner_id"`
-	FileName string `json:"file_name"`
-	Size     int64  `json:"size"`
-	MimeType string `json:"mime_type"`
-	Message  string `json:"message"`
+	ID          int       `json:"id"`
+	OwnerID     int       `json:"owner_id"`
+	FileName    string    `json:"file_name"`
+	StoragePath string    `json:"storage_path"`
+	Size        int64     `json:"size"`
+	MimeType    string    `json:"mime_type"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
+	Message     string    `json:"message"`
 }
 
 func AddFileHandler(db *sql.DB, uploadDir string) http.HandlerFunc {
@@ -42,7 +45,17 @@ func AddFileHandler(db *sql.DB, uploadDir string) http.HandlerFunc {
 		}
 		defer file.Close()
 
-		ownerID := 1
+		ctx := r.Context()
+		userIDVal := ctx.Value("userID")
+		if userIDVal == nil {
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
+		ownerID, ok := userIDVal.(int)
+		if !ok {
+			http.Error(w, "Invalid userID", http.StatusInternalServerError)
+			return
+		}
 
 		storedFileName := fmt.Sprintf("%d_%d_%s", ownerID, time.Now().UnixNano(), header.Filename)
 		dstPath := filepath.Join(uploadDir, storedFileName)
@@ -68,12 +81,15 @@ func AddFileHandler(db *sql.DB, uploadDir string) http.HandlerFunc {
 		}
 
 		resp := FileResponse{
-			ID:       dbFile.ID,
-			OwnerID:  dbFile.OwnerID,
-			FileName: dbFile.FileName,
-			Size:     dbFile.Size,
-			MimeType: dbFile.MimeType,
-			Message:  "File uploaded successfully",
+			ID:          dbFile.ID,
+			OwnerID:     dbFile.OwnerID,
+			FileName:    dbFile.FileName,
+			StoragePath: dbFile.StoragePath,
+			Size:        dbFile.Size,
+			MimeType:    dbFile.MimeType,
+			CreatedAt:   dbFile.CreatedAt,
+			UpdatedAt:   dbFile.UpdatedAt,
+			Message:     "File uploaded successfully",
 		}
 
 		w.Header().Set("Content-Type", "application/json")
@@ -105,11 +121,15 @@ func SearchFileByOwnerHandler(db *sql.DB) http.HandlerFunc {
 		fileList := make([]FileResponse, 0, len(files))
 		for _, f := range files {
 			fileList = append(fileList, FileResponse{
-				ID:       f.ID,
-				OwnerID:  f.OwnerID,
-				FileName: f.FileName,
-				Size:     f.Size,
-				MimeType: f.MimeType,
+				ID:          f.ID,
+				OwnerID:     f.OwnerID,
+				FileName:    f.FileName,
+				StoragePath: f.StoragePath,
+				Size:        f.Size,
+				MimeType:    f.MimeType,
+				CreatedAt:   f.CreatedAt,
+				UpdatedAt:   f.UpdatedAt,
+				Message:     "",
 			})
 		}
 
